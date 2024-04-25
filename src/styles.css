@@ -1,0 +1,210 @@
+:root {
+  font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 400;
+  color: white;
+  background-color: #f6f6f6;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+  background-color: rgb(42, 42, 42);
+}
+
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  font-size: 1rem;
+  word-break: break-word;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  height: 100vh;
+}
+
+.header {
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.flex {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+
+a:hover {
+  color: #535bf2;
+}
+
+input,
+button,
+textarea {
+  border-radius: 8px;
+  border: 1px solid #535bf2;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  background-color: rgb(42, 42, 42);
+  font-family: inherit;
+  color: white;
+  transition: border-color 0.25s;
+  box-shadow: 1px 2px 2px rgba(0, 0, 0, 0.2);
+}
+
+input,
+textarea {
+  box-shadow: none;
+  border: 1px solid #f0f0f0;
+}
+
+input:focus,
+textarea:focus,
+input:active,
+textarea:active {
+  outline: none;
+  border-color: #535bf2;
+}
+
+button {
+  cursor: pointer;
+  background-color: #535bf2;
+}
+
+button:hover {
+  border-color: #535bf2;
+}
+
+input,
+button {
+  outline: none;
+}
+
+#greet-input {
+  margin-right: 5px;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bold;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.modal-form {
+  padding-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.modal-form > button {
+  align-self: flex-end;
+}
+
+.modal-content {
+  background-color: rgb(42, 42, 42);
+  margin: 20% auto;
+  padding: 20px;
+  width: 70%;
+  border-radius: 5px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.close {
+  float: right;
+  cursor: pointer;
+}
+
+.content {
+  display: flex;
+  flex-grow: 1;
+  max-height: calc(100vh - 91px);
+}
+
+.content > div {
+  padding: 1rem;
+  border-right: 1px solid #c7c7c7;
+  max-height: 100%;
+  width: 50%;
+}
+
+.content > div:last-child {
+  border-right: none;
+}
+
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-height: 100%;
+  overflow: scroll;
+}
+
+.note-card {
+  white-space: pre-wrap;
+  border-radius: 8px;
+  background-color: yellow;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-family: inherit;
+  box-shadow: 1px 2px 2px rgba(0, 0, 0, 0.2);
+  word-break: break-word;
+  background-color: #535bf2;
+}
+
+.note-header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 1rem;
+  color: white;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #c7c7c7;
+}
+
+.note-content {
+  padding-top: 1rem;
+}
+
+.note-content > p,
+.note-preview > p {
+  padding-top: 1rem;
+}
+
+.note-content > p {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-top: 1rem;
+}
+
+.note-header:last-child {
+  color: red;
+}

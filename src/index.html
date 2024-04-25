@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="styles.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script
+      src="https://kit.fontawesome.com/cbfc23503c.js"
+      crossorigin="anonymous"
+    ></script>
+    <title>Tauri-notes-app</title>
+    <script type="module" src="/main.js" defer></script>
+    <style>
+      .logo.vanilla:hover {
+        filter: drop-shadow(0 0 2em #ffe21c);
+      }
+    </style>
+  </head>
+
+  <body>
+    <header class="header">
+      <h1>Your notes</h1>
+      <button class="flex" id="add-note">
+        <i class="fas fa-plus"></i>
+        <p>Add note</p>
+      </button>
+    </header>
+    <div class="modal" id="add-note-modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <p id="modal-header-text">Add a new note</p>
+          <span class="close" id="note-close">
+            <i class="fa-solid fa-xmark"></i>
+          </span>
+        </div>
+        <form class="modal-form" id="modal-form">
+          <input type="text" id="note-title" placeholder="Title" />
+          <textarea id="note-text" placeholder="Take a note..."></textarea>
+          <button type="submit" id="note-submit">Add note</button>
+        </form>
+      </div>
+    </div>
+    <div class="content">
+      <div class="notes" id="notes"></div>
+      <div class="note-preview" id="note-preview"></div>
+    </div>
+  </body>
+</html>
