@@ -5,15 +5,23 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+
+
+// --------------------------------- Imports ---------------------------------
+
+
+
 use serde::{Serialize, Deserialize};
 use tauri::Manager;
-use tauri::{Result};
+use tauri::Result;
 use std::fs;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
+use std::io::Write;
+use rusqlite::{Connection, params};
 
 
-use std::io::{Write};
+
+// --------------------------------- JSON File ---------------------------------
+
 
 
 #[derive(Serialize, Deserialize)]
@@ -30,6 +38,7 @@ impl Note {
 }
 
 
+// Save a note to a file
 #[tauri::command]
 fn save_note(id: usize, title: &str, content: &str) -> Result<()> {
     // Read file content and deserialize it
@@ -47,6 +56,8 @@ fn save_note(id: usize, title: &str, content: &str) -> Result<()> {
     Ok(())
 }
 
+
+// Load notes from a file
 #[tauri::command]
 fn load_notes() -> Result<Vec<Note>> {
     // Open the file
@@ -70,6 +81,7 @@ fn load_notes() -> Result<Vec<Note>> {
     Ok(notes)
 }
 
+// Update a note in the file
 #[tauri::command]
 fn update_note(id: usize, title: &str, content: &str) -> Result<()> {
     // open and read the file and deserialize data to Vec<Note>
@@ -93,6 +105,7 @@ fn update_note(id: usize, title: &str, content: &str) -> Result<()> {
     Ok(())
 }
 
+// Delete a note from the file
 #[tauri::command]
 fn delete_note(id: usize) -> Result<()> {
     // open and read the file and deserialize data to Vec<Note>
@@ -112,58 +125,93 @@ fn delete_note(id: usize) -> Result<()> {
     Ok(())
 }
 
-// Créer une note
-// #[tauri::command]
-// fn create_note(conn: &Connection, note: &Note) ->
-// Result<()> {
-//     conn.execute(
-//         "INSERT INTO notes (title, content) VALUES (?1, ?2)",
-//         params![note.title, note.content],
-// )?;
-// Ok(()) }
-// // Lire toutes les notes
-// #[command]
-// fn read_notes(conn: &Connection) -> Result<Vec<Note>> {
-//     let mut stmt = conn.prepare("SELECT id, title, content FROM notes")?;
-//     let note_iter = stmt.query_map([], |row| {
-//         Ok((
-//             row.get(0)?,
-//             row.get(1)?,
-//             row.get(2)?,
-//         ))
-//     })?;
-//     let notes: Vec<Note> = note_iter.collect();
-//     notes
-// }
-// // Mettre à jour une note
-// #[command]
-// fn update_note(conn: &Connection, note: &Note) ->
-// Result<()> {
-//     conn.execute(
-//         "UPDATE notes SET title = ?1, content = ?2 WHERE id = ?3",
-//         params![note.title, note.content, note.id],
-// )?;
-// Ok(()) }
 
-// // Supprimer une note
-// #[command]
-// fn delete_note(conn: &Connection, id: i64) -> Result<()> {
-//     conn.execute(
-//         "DELETE FROM notes WHERE id = ?1",
-//         params![id],
-//     )?;
-// Ok(()) }
 
-// Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
+// --------------------------------- SQLite Database ---------------------------------
+
+
+
+// create sqlite connection
+fn init_db() -> Result<()> {
+    // create a connection to the sqlite database
+    let conn = Connection::open("notes.db").expect("failed to open database");
+    // create a table in the database
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS notes (
+            id INTEGER PRIMARY KEY,
+            title TEXT NOT NULL,
+            content TEXT NOT NULL
+    )",
+    [], ).expect("failed to create table");
+    Ok(()) 
+}
+
+// create a note and save into sqlite DB
 #[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
+fn db_save_note(title: &str, content: &str) -> Result<()> {
+    // create a connection to the sqlite database
+    let conn = Connection::open("notes.db").expect("failed to open database");
+    // insert a note into the database
+    conn.execute(
+        "INSERT INTO notes (title, content) VALUES (?1, ?2)",
+        params![title, content],
+    ).expect("failed to insert note");
+    Ok(())
+}
+
+// load notes from sqlite DB
+#[tauri::command]
+fn db_load_notes() -> Result<Vec<Note>> {
+    // create a connection to the sqlite database
+    let conn = Connection::open("notes.db").expect("failed to open database");
+    // query all notes from the database
+    let mut stmt = conn.prepare("SELECT id, title, content FROM notes").expect("failed to prepare query");
+    let note_iter = stmt.query_map([], |row| {
+        Ok(Note {
+            id: row.get(0).expect("failed to get id"),
+            title: row.get(1).expect("failed to get title"),
+            content: row.get(2).expect("failed to get content"),
+        })
+    }).expect("failed to query map");
+    let notes: Vec<Note> = note_iter.map(|note| note.unwrap()).collect();
+    Ok(notes)
+}
+
+// update a note in sqlite DB
+#[tauri::command]
+fn db_update_note(id: usize, title: &str, content: &str) -> Result<()> {
+    // create a connection to the sqlite database
+    let conn = Connection::open("notes.db").expect("failed to open database");
+    // update a note in the database
+    conn.execute(
+        "UPDATE notes SET title = ?1, content = ?2 WHERE id = ?3",
+        params![title, content, id],
+    ).expect("failed to update note");
+    Ok(())
+}
+
+// delete a note from sqlite DB
+#[tauri::command]
+fn db_delete_note(id: usize) -> Result<()> {
+    // create a connection to the sqlite database
+    let conn = Connection::open("notes.db").expect("failed to open database");
+    // delete a note from the database
+    conn.execute(
+        "DELETE FROM notes WHERE id = ?1",
+        params![id],
+    ).expect("failed to delete note");
+    Ok(())
 }
 
 fn main() {
-    // init_db().expect("failed to initialize database");
+    // initialize the database
+    init_db().expect("failed to initialize database");
+
+    // run the tauri application
     tauri::Builder::default()
+        // Add a setup hook to run some code on application startup
         .setup(|app| {
+            // open devtools if the app is in debug mode
             #[cfg(debug_assertions)] // only include this code on debug builds
             {
                 let window = app.get_window("main").unwrap();
@@ -172,12 +220,16 @@ fn main() {
             }
             Ok(())
         })
+        // Add the commands to the tauri application
         .invoke_handler(tauri::generate_handler![
-            greet,
             save_note,
             load_notes,
             update_note,
-            delete_note
+            delete_note,
+            db_save_note,
+            db_load_notes,
+            db_update_note,
+            db_delete_note,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
