@@ -201,6 +201,31 @@ fn db_delete_note(id: usize) -> Result<()> {
     Ok(())
 }
 
+#[tauri::command]
+fn export_notes_to_pdf() -> Result<()> {
+    // create a connection to the sqlite database
+    let conn = Connection::open("notes.db").expect("failed to open database");
+    // query all notes from the database
+    let mut stmt = conn.prepare("SELECT id, title, content FROM notes").expect("failed to prepare query");
+    let note_iter = stmt.query_map([], |row| {
+        Ok(Note {
+            id: row.get(0).expect("failed to get id"),
+            title: row.get(1).expect("failed to get title"),
+            content: row.get(2).expect("failed to get content"),
+        })
+    }).expect("failed to query map");
+    let notes: Vec<Note> = note_iter.map(|note| note.unwrap()).collect();
+
+    // create a pdf file
+    let mut file = std::fs::OpenOptions::new().write(true).create(true).open("notes.pdf")?;
+    writeln!(file, "Notes\n\n")?;
+    for note in notes {
+        writeln!(file, "Title: {}\nContent: {}\n\n", note.title, note.content)?;
+    }
+
+    Ok(())
+}
+
 fn main() {
     // fix the path environment
     let _ = fix_path_env::fix();
@@ -219,6 +244,7 @@ fn main() {
             db_load_notes,
             db_update_note,
             db_delete_note,
+            export_notes_to_pdf
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

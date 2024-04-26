@@ -4,6 +4,9 @@ const { invoke } = window.__TAURI__.tauri;
 window.addEventListener("DOMContentLoaded", async () => {
   const loadNotes = new LoadNotes();
   await loadNotes.loadNotes();
+  new Quill("#editor", {
+    theme: "snow",
+  });
 });
 
 let isUpdate = false; // Variable to track if it's an update operation
@@ -70,7 +73,8 @@ class Notes {
   }
 
   async saveOrUpdateNote() {
-    const content = document.getElementById("note-text").value;
+    const quill = new Quill("#editor");
+    const content = quill.root.innerHTML;
     const title = document.getElementById("note-title").value;
     if (isUpdate) {
       const note = new Notes(createdNoteId, title, content);
@@ -164,7 +168,7 @@ class DisplayNotes {
       const title = document.createElement("h2");
       title.textContent = this.notes[i].title;
       const p = document.createElement("p");
-      p.textContent = this.notes[i].content;
+      p.innerHTML = this.notes[i].content;
       content.appendChild(title);
       content.appendChild(p);
       div.appendChild(content);
@@ -201,7 +205,7 @@ class PreviewNote {
 class Modal {
   constructor() {
     this.titleInput = document.getElementById("note-title");
-    this.textInput = document.getElementById("note-text");
+    this.textInput = document.getElementById("editor");
     this.submitBtn = document.getElementById("note-submit");
     this.modalHeaderText = document.getElementById("modal-header-text");
   }
@@ -215,6 +219,8 @@ class Modal {
       ? "Update Note"
       : "Add New Note";
     document.getElementById("add-note-modal").style.display = "block";
+    const quill = new Quill("#editor");
+    quill.root.innerHTML = text;
   }
 
   closeModal() {
@@ -242,4 +248,13 @@ document.getElementById("note-submit").addEventListener("click", async (e) => {
   e.preventDefault();
   const note = new Notes();
   await note.saveOrUpdateNote();
+});
+
+// Event listener to export notes
+document.getElementById("export-button").addEventListener("click", async () => {
+  try {
+    await invoke("export_notes_to_pdf");
+  } catch (error) {
+    console.error("Failed to export notes:", error);
+  }
 });

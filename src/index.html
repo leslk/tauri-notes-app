@@ -8,6 +8,11 @@
       src="https://kit.fontawesome.com/cbfc23503c.js"
       crossorigin="anonymous"
     ></script>
+    <link
+      href="https://cdn.quilljs.com/1.3.6/quill.snow.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     <title>Tauri-notes-app</title>
     <script type="module" src="/main.js" defer></script>
     <style>
@@ -20,10 +25,16 @@
   <body>
     <header class="header">
       <h1>Your notes</h1>
-      <button class="flex" id="add-note">
-        <i class="fas fa-plus"></i>
-        <p>Add note</p>
-      </button>
+      <div class="header-buttons">
+        <button class="flex" id="export-button">
+          <i class="fas fa-file-export"></i>
+          <p>Export notes</p>
+        </button>
+        <button class="flex" id="add-note">
+          <i class="fas fa-plus"></i>
+          <p>Add note</p>
+        </button>
+      </div>
     </header>
     <div class="modal" id="add-note-modal">
       <div class="modal-content">
@@ -35,9 +46,11 @@
         </div>
         <form class="modal-form" id="modal-form">
           <input type="text" id="note-title" placeholder="Title" />
-          <textarea id="note-text" placeholder="Take a note..."></textarea>
-          <button type="submit" id="note-submit">Add note</button>
+          <div id="editor" style="height: 200px"></div>
         </form>
+        <button class="modal-button" type="submit" id="note-submit">
+          Add note
+        </button>
       </div>
     </div>
     <div class="content">

@@ -35,6 +35,12 @@ body {
   align-items: center;
 }
 
+.header-buttons {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
 .flex {
   display: flex;
   align-items: center;
@@ -43,7 +49,7 @@ body {
 
 a {
   font-weight: 500;
-  color: #646cff;
+  color: #535bf2;
   text-decoration: inherit;
 }
 
@@ -118,10 +124,41 @@ button {
 }
 
 .modal-form {
-  padding-top: 1rem;
-  display: flex;
+  padding: 1rem;
   flex-direction: column;
-  gap: 2rem;
+  display: flex;
+}
+
+.ql-toolbar.ql-snow {
+  border-radius: 8px 8px 0 0;
+  color: white !important;
+}
+
+.ql-snow .ql-picker {
+  color: white !important;
+}
+
+.ql-snow .ql-picker-options {
+  background-color: rgb(42, 42, 42) !important;
+  color: white !important;
+}
+
+.ql-picker-item:hover,
+.ql-picker-item.ql-selected,
+.ql-picker-label:hover {
+  color: #535bf2 !important;
+}
+
+.ql-snow .ql-stroke {
+  stroke: white !important;
+}
+
+#editor {
+  border-radius: 0 0 8px 8px;
+}
+
+.modal-form > input {
+  margin-bottom: 1rem;
 }
 
 .modal-form > button {
