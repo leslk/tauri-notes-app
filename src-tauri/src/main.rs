@@ -2,8 +2,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-// Prevents additional console window on Windows in release, DO NOT REMOVE!!
-#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 
 
@@ -12,11 +10,11 @@
 
 
 use serde::{Serialize, Deserialize};
-use tauri::Manager;
 use tauri::Result;
 use std::fs;
 use std::io::Write;
 use rusqlite::{Connection, params};
+use fix_path_env;
 
 
 
@@ -204,22 +202,13 @@ fn db_delete_note(id: usize) -> Result<()> {
 }
 
 fn main() {
+    // fix the path environment
+    let _ = fix_path_env::fix();
     // initialize the database
     init_db().expect("failed to initialize database");
 
     // run the tauri application
     tauri::Builder::default()
-        // Add a setup hook to run some code on application startup
-        .setup(|app| {
-            // open devtools if the app is in debug mode
-            #[cfg(debug_assertions)] // only include this code on debug builds
-            {
-                let window = app.get_window("main").unwrap();
-                window.open_devtools();
-                window.close_devtools();
-            }
-            Ok(())
-        })
         // Add the commands to the tauri application
         .invoke_handler(tauri::generate_handler![
             save_note,

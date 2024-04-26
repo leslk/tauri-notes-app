@@ -152,8 +152,8 @@ class DisplayNotes {
         await note.deleteNote(this.notes[i].id);
       });
 
-      div.addEventListener("click", () => {
-        if (target === trashIcon || target === pencilIcon) return;
+      div.addEventListener("click", (event) => {
+        if (event.target === trashIcon || event.target === pencilIcon) return;
         const previewNote = new PreviewNote();
         previewNote.createPreview(this.notes[i]);
       });
