@@ -17,46 +17,6 @@ window.onclick = function (event) {
   }
 };
 
-async function saveNote(text, title) {
-  try {
-    const noteId = Math.floor(Math.random() * 1000000);
-    // await invoke("save_note", { id: noteId, title: title, content: text });
-    await invoke("db_save_note", { title: title, content: text });
-    console.log("Note saved successfully!");
-  } catch (error) {
-    console.error("Failed to save note:", error);
-  }
-}
-
-async function updateNote(text, title) {
-  try {
-    // await invoke("update_note", {
-    //   id: createdNoteId,
-    //   title: title,
-    //   content: text,
-    // });
-    await invoke("db_update_note", {
-      id: createdNoteId,
-      title: title,
-      content: text,
-    });
-    console.log("Note updated successfully!");
-  } catch (error) {
-    console.error("Failed to update note:", error);
-  }
-}
-
-async function deleteNote(id) {
-  try {
-    // await invoke("delete_note", { id: id });
-    await invoke("db_delete_note", { id: id });
-    console.log("Note deleted successfully!");
-    await loadNotes(); // Reload notes after operation
-  } catch (error) {
-    console.error("Failed to delete note:", error);
-  }
-}
-
 // class to handle notes
 class Notes {
   constructor(id, title, content) {
@@ -124,6 +84,7 @@ class Notes {
     await loadNotes.loadNotes(); // Reload notes after operation
     const modal = new Modal();
     modal.closeModal();
+    createdNoteId = null; // Reset the note id
   }
 }
 
@@ -138,7 +99,6 @@ class LoadNotes {
       // this.notes = await invoke("load_notes");
       this.notes = await invoke("db_load_notes");
       const displayNotes = new DisplayNotes(this.notes);
-      console.log(displayNotes);
       displayNotes.displayNotes();
     } catch (error) {
       console.error("Failed to load notes:");
@@ -193,6 +153,7 @@ class DisplayNotes {
       });
 
       div.addEventListener("click", () => {
+        if (target === trashIcon || target === pencilIcon) return;
         const previewNote = new PreviewNote();
         previewNote.createPreview(this.notes[i]);
       });
