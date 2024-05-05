@@ -9,6 +9,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 let isUpdate = false; // Variable to track if it's an update operation
 let createdNoteId = null; // Variable to track the note id for delete operation or update operation
 let typeOfSaving = "json"; // Variable to track the type of saving
+let queryText = ""; // Variable to track the search query
 
 function changeTypeOfSaving(type) {
   const jsonSaving = document.getElementById("json");
@@ -141,7 +142,7 @@ class LoadNotes {
       if (typeOfSaving === "json") {
         this.notes = await invoke("load_notes");
       } else {
-        this.notes = await invoke("db_load_notes");
+        this.notes = await invoke("db_load_notes", { querySearch: queryText });
       }
       const displayNotes = new DisplayNotes(this.notes);
       displayNotes.displayNotes();
@@ -226,7 +227,6 @@ class DisplayNotes {
       if (this.notes[i].content == "<p><br></p>") {
         p.textContent = "No content";
       }
-      console.log(this.notes[i].content);
       p.innerHTML = this.notes[i].content;
       contentContainer.appendChild(contentLabel);
       contentContainer.appendChild(p);
@@ -332,6 +332,14 @@ document.getElementById("json").addEventListener("click", async () => {
 
 document.getElementById("database").addEventListener("click", async () => {
   changeTypeOfSaving("database");
+  const loadNotes = new LoadNotes();
+  await loadNotes.loadNotes();
+});
+
+// Event listener to search notes
+document.getElementById("search-notes").addEventListener("input", async (e) => {
+  queryText = e.target.value;
+  console.log(queryText);
   const loadNotes = new LoadNotes();
   await loadNotes.loadNotes();
 });

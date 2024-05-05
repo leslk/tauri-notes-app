@@ -10,11 +10,14 @@
 
 
 use serde::{Serialize, Deserialize};
-use tauri::Result;
+use tauri::{ Result};
 use std::fs;
 use std::io::Write;
 use rusqlite::{Connection, params, Result as RusResult};
 use fix_path_env;
+use std::path::PathBuf;
+use directories::UserDirs;
+
 
 
 
@@ -138,7 +141,6 @@ fn delete_note(id: usize, app_handle: tauri::AppHandle) -> Result<()> {
 
 
 // create sqlite connection
-// create sqlite connection
 fn init_db(path: String) -> RusResult<()> {
     // create a connection to the sqlite database
     let conn = Connection::open(&path).expect("DB Connection Err");
@@ -159,6 +161,9 @@ fn db_save_note(title: &str, content: &str, app_handle: tauri::AppHandle) -> Res
     // create a connection to the sqlite database
     let respath = get_db_path(app_handle);
     let conn = Connection::open(&respath).unwrap();
+    println!("DB Path: {}", respath);
+    println!("Title: {}", title);
+    println!("Content: {}", content);
     // insert a note into the database
     conn.execute(
         "INSERT INTO notes (title, content) VALUES (?1, ?2)",
@@ -229,9 +234,14 @@ fn export_notes_to_pdf(app_handle: tauri::AppHandle) -> Result<()> {
         })
     }).expect("failed to query map");
     let notes: Vec<Note> = note_iter.map(|note| note.unwrap()).collect();
+    let user_dirs: UserDirs = UserDirs::new().unwrap();
+    let downloads_dir: String = user_dirs.download_dir().unwrap().to_str().unwrap().to_string();
+    let mut pdf_path = PathBuf::new();
+    pdf_path.push(&downloads_dir);
+    pdf_path.push("notes.pdf");
 
     // create a pdf file
-    let mut file = std::fs::OpenOptions::new().write(true).create(true).open("notes.pdf")?;
+    let mut file = std::fs::OpenOptions::new().write(true).create(true).open(pdf_path)?;
     writeln!(file, "Notes\n\n")?;
     for note in notes {
         writeln!(file, "Title: {}\nContent: {}\n\n", note.title, note.content)?;
