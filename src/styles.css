@@ -10,7 +10,7 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
-  background-color: rgb(42, 42, 42);
+  background-color: rgb(142, 142, 142);
 }
 
 * {
@@ -23,22 +23,67 @@
 
 body {
   display: flex;
-  flex-direction: column;
-  gap: 1rem;
   height: 100vh;
 }
 
 .header {
-  padding: 1rem;
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  background-color: black;
+  width: 300px;
+  gap: 1rem;
   align-items: center;
+}
+
+.header-logo {
+  width: 100%;
+  font-size: 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+  padding: 3rem 1rem;
+}
+
+.header-logo > h1 {
+  font-size: 1.5rem;
+  font-weight: 900;
+  text-align: center;
+}
+
+.header-logo > i {
+  font-size: 4rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  background-color: rgb(136, 140, 209);
 }
 
 .header-buttons {
   display: flex;
+  flex-direction: column;
   gap: 1rem;
-  align-items: center;
+}
+
+.header-type-of-saving {
+  background-color: rgb(36, 36, 36);
+  width: 100%;
+}
+
+.type-of-saving {
+  padding: 1rem;
+}
+
+.type-of-saving:hover {
+  background-color: rgba(136, 140, 209, 0.7);
+  color: white;
+}
+
+.type-of-saving.active {
+  background-color: rgb(136, 140, 209);
+  color: black;
 }
 
 .flex {
@@ -61,7 +106,7 @@ input,
 button,
 textarea {
   border-radius: 8px;
-  border: 1px solid #535bf2;
+  border: 1px solid rgb(136, 140, 209);
   padding: 0.6em 1.2em;
   font-size: 1em;
   font-weight: 500;
@@ -75,7 +120,7 @@ textarea {
 input,
 textarea {
   box-shadow: none;
-  border: 1px solid #f0f0f0;
+  border: 1px solid #9c9c9c;
 }
 
 input:focus,
@@ -83,12 +128,12 @@ textarea:focus,
 input:active,
 textarea:active {
   outline: none;
-  border-color: #535bf2;
+  border-color: rgb(136, 140, 209);
 }
 
 button {
   cursor: pointer;
-  background-color: #535bf2;
+  background-color: rgb(136, 140, 209);
 }
 
 button:hover {
@@ -107,10 +152,12 @@ button {
 .modal {
   display: none;
   position: fixed;
+  align-items: center;
+  justify-content: center;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
   background-color: rgba(0, 0, 0, 0.5);
 }
 
@@ -120,7 +167,24 @@ button {
   align-items: center;
   font-weight: bold;
   padding-bottom: 1rem;
-  border-bottom: 1px solid #f0f0f0;
+}
+
+.modal-form > input {
+  margin-bottom: 1rem;
+}
+
+.modal-form > button {
+  align-self: flex-end;
+}
+
+.modal-content {
+  background-color: rgb(42, 42, 42);
+  padding: 20px;
+  width: 70%;
+  max-height: 80%;
+  overflow: scroll;
+  border-radius: 5px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .modal-form {
@@ -129,9 +193,20 @@ button {
   display: flex;
 }
 
+.error {
+  color: red;
+  font-weight: bold;
+  padding: 1rem;
+}
+
+.ql-editor {
+  min-height: 200px;
+}
+
 .ql-toolbar.ql-snow {
   border-radius: 8px 8px 0 0;
   color: white !important;
+  border: 1px solid #9c9c9c !important;
 }
 
 .ql-snow .ql-picker {
@@ -153,25 +228,14 @@ button {
   stroke: white !important;
 }
 
+.ql-container.ql-snow {
+  border-radius: 0 0 8px 8px;
+  border: 1px solid #9c9c9c !important;
+  border-top: none !important;
+}
+
 #editor {
   border-radius: 0 0 8px 8px;
-}
-
-.modal-form > input {
-  margin-bottom: 1rem;
-}
-
-.modal-form > button {
-  align-self: flex-end;
-}
-
-.modal-content {
-  background-color: rgb(42, 42, 42);
-  margin: 20% auto;
-  padding: 20px;
-  width: 70%;
-  border-radius: 5px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .close {
@@ -182,26 +246,34 @@ button {
 .content {
   display: flex;
   flex-grow: 1;
-  gap: 1rem;
-  max-height: calc(100vh - 91px);
+  height: 100vh;
 }
 
-.content > div {
+.content > #notes {
   max-height: 100%;
-  width: 50%;
-  border-right: 3px solid rgb(58, 58, 58);
+  width: 30%;
+  border-right: 1px solid rgb(58, 58, 58);
   padding-top: 1rem;
+  height: 100vh;
+  overflow: scroll;
 }
 
 .content > div:last-child {
   border-right: none;
 }
 
-.notes,
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
 .note-preview {
+  background-color: rgb(79, 79, 79);
+  padding: 2rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  flex-grow: 1;
   max-height: 100%;
   overflow: scroll;
 }
@@ -210,12 +282,27 @@ button {
   white-space: pre-wrap;
   padding: 0.6em 1.2em;
   font-size: 1em;
-  margin: 0 1rem;
-  background-color: rgb(58, 58, 58);
+  margin: 0 0.625rem;
+  background-color: rgb(36, 36, 36);
   border-radius: 8px;
   font-family: inherit;
-  border-bottom: 1px solid #535bf2;
   word-break: break-word;
+}
+
+.note-title {
+  display: flex;
+  align-items: end;
+  gap: 0.2rem;
+}
+
+.note-content-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.note-title-text {
+  font-weight: 500;
 }
 
 .note-header {
@@ -235,8 +322,8 @@ button {
   display: flex;
   justify-content: center;
   align-items: center;
-  border-radius: 50%;
-  background-color: #535bf2;
+  border-radius: 12px;
+  background-color: rgb(136, 140, 209);
 }
 
 .note-content {
@@ -254,6 +341,6 @@ button {
   padding-top: 1rem;
 }
 
-.note-header:last-child {
+.note-header:last-child() {
   color: red;
 }

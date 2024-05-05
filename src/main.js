@@ -2,15 +2,27 @@ const { invoke } = window.__TAURI__.tauri;
 
 // Display the notes when Dom is loaded
 window.addEventListener("DOMContentLoaded", async () => {
+  changeTypeOfSaving(typeOfSaving); // Set the type of saving
   const loadNotes = new LoadNotes();
   await loadNotes.loadNotes();
-  new Quill("#editor", {
-    theme: "snow",
-  });
 });
-
 let isUpdate = false; // Variable to track if it's an update operation
 let createdNoteId = null; // Variable to track the note id for delete operation or update operation
+let typeOfSaving = "json"; // Variable to track the type of saving
+
+function changeTypeOfSaving(type) {
+  const jsonSaving = document.getElementById("json");
+  const databaseSaving = document.getElementById("database");
+  typeOfSaving = type;
+  if (type === "json") {
+    const jsonSaving = document.getElementById("json");
+    jsonSaving.classList.add("active");
+    databaseSaving.classList.remove("active");
+  } else {
+    databaseSaving.classList.add("active");
+    jsonSaving.classList.remove("active");
+  }
+}
 
 // When the user clicks anywhere outside of the modal, close it
 window.onclick = function (event) {
@@ -30,12 +42,19 @@ class Notes {
 
   async saveNote() {
     try {
-      // await invoke("save_note", { id: this.id, title: this.title, content: this.content });
-      await invoke("db_save_note", {
-        id: this.id,
-        title: this.title,
-        content: this.content,
-      });
+      if (typeOfSaving === "json") {
+        await invoke("save_note", {
+          id: this.id,
+          title: this.title,
+          content: this.content,
+        });
+      } else {
+        await invoke("db_save_note", {
+          id: this.id,
+          title: this.title,
+          content: this.content,
+        });
+      }
       console.log("Note saved successfully!");
     } catch (error) {
       console.error("Failed to save note:", error);
@@ -44,16 +63,19 @@ class Notes {
 
   async updateNote() {
     try {
-      // await invoke("update_note", {
-      //   id: this.id,
-      //   title: this.title,
-      //   content: this.content,
-      // });
-      await invoke("db_update_note", {
-        id: this.id,
-        title: this.title,
-        content: this.content,
-      });
+      if (typeOfSaving === "json") {
+        await invoke("update_note", {
+          id: this.id,
+          title: this.title,
+          content: this.content,
+        });
+      } else {
+        await invoke("db_update_note", {
+          id: this.id,
+          title: this.title,
+          content: this.content,
+        });
+      }
       console.log("Note updated successfully!");
     } catch (error) {
       console.error("Failed to update note:", error);
@@ -62,8 +84,11 @@ class Notes {
 
   async deleteNote() {
     try {
-      // await invoke("delete_note", { id: this.id });
-      await invoke("db_delete_note", { id: this.id });
+      if (typeOfSaving === "json") {
+        await invoke("delete_note", { id: this.id });
+      } else {
+        await invoke("db_delete_note", { id: this.id });
+      }
       console.log("Note deleted successfully!");
       const loadNotes = new LoadNotes();
       await loadNotes.loadNotes(); // Reload notes after operation
@@ -76,6 +101,18 @@ class Notes {
     const quill = new Quill("#editor");
     const content = quill.root.innerHTML;
     const title = document.getElementById("note-title").value;
+    const error = document.querySelector(".error");
+    if (error) {
+      error.remove();
+    }
+    if (!title || content === "<p><br></p>") {
+      const error = document.createElement("p");
+      error.classList.add("error");
+      const modalForm = document.getElementById("modal-form");
+      error.textContent = "Title and content cannot be empty!";
+      modalForm.appendChild(error);
+      return;
+    }
     if (isUpdate) {
       const note = new Notes(createdNoteId, title, content);
       await note.updateNote(content, title); // Call update function if it's an update operation
@@ -89,6 +126,7 @@ class Notes {
     const modal = new Modal();
     modal.closeModal();
     createdNoteId = null; // Reset the note id
+    isUpdate = false; // Reset the update variable
   }
 }
 
@@ -100,8 +138,11 @@ class LoadNotes {
 
   async loadNotes() {
     try {
-      // this.notes = await invoke("load_notes");
-      this.notes = await invoke("db_load_notes");
+      if (typeOfSaving === "json") {
+        this.notes = await invoke("load_notes");
+      } else {
+        this.notes = await invoke("db_load_notes");
+      }
       const displayNotes = new DisplayNotes(this.notes);
       displayNotes.displayNotes();
     } catch (error) {
@@ -122,8 +163,10 @@ class DisplayNotes {
     if (this.notes.length === 0) {
       const previewNote = new PreviewNote();
       previewNote.createNoContentPreview();
+      document.getElementById("notes").style.display = "none";
       return;
     }
+    document.getElementById("notes").style.display = "flex";
     for (let i = 0; i < this.notes.length; i++) {
       if (i === 0) {
         const previewNote = new PreviewNote();
@@ -144,6 +187,7 @@ class DisplayNotes {
       pencilIcon.addEventListener("click", () => {
         createdNoteId = this.notes[i].id;
         const modal = new Modal();
+        isUpdate = true;
         modal.openModal(this.notes[i].title, this.notes[i].content);
       });
 
@@ -165,12 +209,29 @@ class DisplayNotes {
       div.appendChild(header);
       const content = document.createElement("div");
       content.classList.add("note-content");
+      const titleContainer = document.createElement("div");
+      titleContainer.classList.add("note-title");
+      const titleLabel = document.createElement("h2");
+      titleLabel.textContent = "Title: ";
       const title = document.createElement("h2");
-      title.textContent = this.notes[i].title;
+      title.classList.add("note-title-text");
+      title.textContent = this.notes[i].title || "No title";
+      titleContainer.appendChild(titleLabel);
+      titleContainer.appendChild(title);
+      const contentContainer = document.createElement("div");
+      contentContainer.classList.add("note-content-container");
+      const contentLabel = document.createElement("h2");
+      contentLabel.textContent = "Content: ";
       const p = document.createElement("p");
+      if (this.notes[i].content == "<p><br></p>") {
+        p.textContent = "No content";
+      }
+      console.log(this.notes[i].content);
       p.innerHTML = this.notes[i].content;
-      content.appendChild(title);
-      content.appendChild(p);
+      contentContainer.appendChild(contentLabel);
+      contentContainer.appendChild(p);
+      content.appendChild(titleContainer);
+      content.appendChild(contentContainer);
       div.appendChild(content);
       noteContainer.appendChild(div);
     }
@@ -188,7 +249,7 @@ class PreviewNote {
     const noteTitle = document.createElement("h2");
     noteTitle.textContent = note.title;
     const noteText = document.createElement("p");
-    noteText.textContent = note.content;
+    noteText.innerHTML = note.content;
     this.noteContent.appendChild(noteTitle);
     this.noteContent.appendChild(noteText);
   }
@@ -205,27 +266,30 @@ class PreviewNote {
 class Modal {
   constructor() {
     this.titleInput = document.getElementById("note-title");
-    this.textInput = document.getElementById("editor");
     this.submitBtn = document.getElementById("note-submit");
     this.modalHeaderText = document.getElementById("modal-header-text");
+    this.quill = null;
   }
 
   openModal(title = "", text = "") {
     this.titleInput.value = title;
-    this.textInput.value = text;
-    isUpdate = createdNoteId ? true : false; // Reset the update variable
     this.submitBtn.textContent = isUpdate ? "Update Note" : "Save Note";
     this.modalHeaderText.textContent = isUpdate
       ? "Update Note"
       : "Add New Note";
-    document.getElementById("add-note-modal").style.display = "block";
-    const quill = new Quill("#editor");
-    quill.root.innerHTML = text;
+    document.getElementById("add-note-modal").style.display = "flex";
+    const editor = document.createElement("div");
+    editor.id = "editor";
+    document.getElementById("modal-form").appendChild(editor);
+    this.quill = new Quill("#editor", {
+      theme: "snow",
+    });
+    this.quill.root.innerHTML = text;
   }
 
   closeModal() {
     document.getElementById("add-note-modal").style.display = "none";
-    isUpdate = false; // Reset the update variable
+    document.querySelector(".ql-toolbar.ql-snow").remove();
   }
 }
 
@@ -257,4 +321,17 @@ document.getElementById("export-button").addEventListener("click", async () => {
   } catch (error) {
     console.error("Failed to export notes:", error);
   }
+});
+
+// Event listener to change type of saving
+document.getElementById("json").addEventListener("click", async () => {
+  changeTypeOfSaving("json");
+  const loadNotes = new LoadNotes();
+  await loadNotes.loadNotes();
+});
+
+document.getElementById("database").addEventListener("click", async () => {
+  changeTypeOfSaving("database");
+  const loadNotes = new LoadNotes();
+  await loadNotes.loadNotes();
 });

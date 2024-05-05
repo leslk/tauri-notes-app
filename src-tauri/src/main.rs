@@ -13,7 +13,7 @@ use serde::{Serialize, Deserialize};
 use tauri::Result;
 use std::fs;
 use std::io::Write;
-use rusqlite::{Connection, params};
+use rusqlite::{Connection, params, Result as RusResult};
 use fix_path_env;
 
 
@@ -38,17 +38,23 @@ impl Note {
 
 // Save a note to a file
 #[tauri::command]
-fn save_note(id: usize, title: &str, content: &str) -> Result<()> {
+fn save_note(id: usize, title: &str, content: &str, app_handle: tauri::AppHandle) -> Result<()> {
     // Read file content and deserialize it
-    let data = fs::read_to_string("notes.json").expect("Unable to read file");
-    let mut notes: Vec<Note> = serde_json::from_str(&data).expect("Unable to deserialize");
+    let respath = get_json_path(app_handle);
+    let data = fs::read_to_string(&respath).expect("Unable to read file");
+    let mut notes: Vec<Note> = Vec::new();
+    if data.is_empty() {
+        fs::write(&respath, "[]").expect("Unable to write file");
+    } else {
+        notes = serde_json::from_str(&data).expect("Unable to deserialize");
+    }
     
     // Create new note to add and push it to the notes vector
     let note = Note::new(id as u32, title.to_string(), content.to_string());
     notes.push(note);
 
     // Serialize notes to Json data and rewrite the file with it
-    let mut file = std::fs::OpenOptions::new().write(true).open("notes.json")?;
+    let mut file = std::fs::OpenOptions::new().write(true).open(&respath)?;
     writeln!(file, "{}", serde_json::to_string(&notes)?)?;
 
     Ok(())
@@ -57,20 +63,21 @@ fn save_note(id: usize, title: &str, content: &str) -> Result<()> {
 
 // Load notes from a file
 #[tauri::command]
-fn load_notes() -> Result<Vec<Note>> {
+fn load_notes(app_handle: tauri::AppHandle) -> Result<Vec<Note>> {
     // Open the file
+    let respath = get_json_path(app_handle);
     let mut file = std::fs::OpenOptions::new()
         .write(true)
         .create(true)
-        .open("notes.json")?;
+        .open(&respath)?;
 
     // Read the file content
-    let mut data = fs::read_to_string("notes.json").expect("Unable to read file");
+    let mut data = fs::read_to_string(&respath).expect("Unable to read file");
 
     // If the file is empty, write an empty array to it
     if data == "" {
         writeln!(file, "[]")?;
-        data = fs::read_to_string("notes.json").expect("Unable to read file");
+        data = fs::read_to_string(&respath).expect("Unable to read file");
     }
 
     // Deserialize the Json data to Vec<Note>
@@ -81,9 +88,10 @@ fn load_notes() -> Result<Vec<Note>> {
 
 // Update a note in the file
 #[tauri::command]
-fn update_note(id: usize, title: &str, content: &str) -> Result<()> {
+fn update_note(id: usize, title: &str, content: &str, app_handle: tauri::AppHandle) -> Result<()> {
     // open and read the file and deserialize data to Vec<Note>
-    let data = fs::read_to_string("notes.json").expect("Unable to read file");
+    let respath = get_json_path(app_handle);
+    let data = fs::read_to_string(&respath).expect("Unable to read file");
     let mut notes: Vec<Note> = serde_json::from_str(&data).expect("Unable to deserialize");
 
     // Find the note with the id
@@ -92,22 +100,22 @@ fn update_note(id: usize, title: &str, content: &str) -> Result<()> {
     // Update the note with the new title and content
     note.title = title.to_string();
     note.content = content.to_string();
-    println!("{}, {}, {}", note.id, note.title, note.content);
 
     // Serialize Vec<Note> to Json
     let json = serde_json::to_string(&notes).expect("Unable to serialize");
 
     // Write the Json back to the file
-    fs::write("notes.json", json).expect("Unable to write file");
+    fs::write(&respath, json).expect("Unable to write file");
 
     Ok(())
 }
 
 // Delete a note from the file
 #[tauri::command]
-fn delete_note(id: usize) -> Result<()> {
+fn delete_note(id: usize, app_handle: tauri::AppHandle) -> Result<()> {
     // open and read the file and deserialize data to Vec<Note>
-    let data = fs::read_to_string("notes.json").expect("Unable to read file");
+    let respath = get_json_path(app_handle);
+    let data = fs::read_to_string(&respath).expect("Unable to read file");
     let mut notes: Vec<Note> = serde_json::from_str(&data).expect("Unable to deserialize");
 
     // Find the index of the note with the id
@@ -118,7 +126,7 @@ fn delete_note(id: usize) -> Result<()> {
     let json = serde_json::to_string(&notes).expect("Unable to serialize");
 
     // Write the Json back to the file
-    fs::write("notes.json", json).expect("Unable to write file");
+    fs::write(&respath, json).expect("Unable to write file");
 
     Ok(())
 }
@@ -130,9 +138,10 @@ fn delete_note(id: usize) -> Result<()> {
 
 
 // create sqlite connection
-fn init_db() -> Result<()> {
+// create sqlite connection
+fn init_db(path: String) -> RusResult<()> {
     // create a connection to the sqlite database
-    let conn = Connection::open("notes.db").expect("failed to open database");
+    let conn = Connection::open(&path).expect("DB Connection Err");
     // create a table in the database
     conn.execute(
         "CREATE TABLE IF NOT EXISTS notes (
@@ -140,46 +149,49 @@ fn init_db() -> Result<()> {
             title TEXT NOT NULL,
             content TEXT NOT NULL
     )",
-    [], ).expect("failed to create table");
+    [], ).expect("DB Create Err");
     Ok(()) 
 }
 
 // create a note and save into sqlite DB
 #[tauri::command]
-fn db_save_note(title: &str, content: &str) -> Result<()> {
+fn db_save_note(title: &str, content: &str, app_handle: tauri::AppHandle) -> Result<()> {
     // create a connection to the sqlite database
-    let conn = Connection::open("notes.db").expect("failed to open database");
+    let respath = get_db_path(app_handle);
+    let conn = Connection::open(&respath).unwrap();
     // insert a note into the database
     conn.execute(
         "INSERT INTO notes (title, content) VALUES (?1, ?2)",
         params![title, content],
-    ).expect("failed to insert note");
+    ).unwrap_or_else(|_| panic!("failed to insert note"));
     Ok(())
 }
 
 // load notes from sqlite DB
 #[tauri::command]
-fn db_load_notes() -> Result<Vec<Note>> {
+fn db_load_notes(app_handle: tauri::AppHandle) -> Result<Vec<Note>> {
     // create a connection to the sqlite database
-    let conn = Connection::open("notes.db").expect("failed to open database");
+    let respath = get_db_path(app_handle);
+    let conn = Connection::open(&respath).unwrap();
     // query all notes from the database
-    let mut stmt = conn.prepare("SELECT id, title, content FROM notes").expect("failed to prepare query");
+    let mut stmt = conn.prepare("SELECT id, title, content FROM notes").unwrap_or_else(|_| panic!("failed to prepare query"));
     let note_iter = stmt.query_map([], |row| {
         Ok(Note {
             id: row.get(0).expect("failed to get id"),
             title: row.get(1).expect("failed to get title"),
             content: row.get(2).expect("failed to get content"),
         })
-    }).expect("failed to query map");
+    }).unwrap_or_else(|_| panic!("failed to query map"));
     let notes: Vec<Note> = note_iter.map(|note| note.unwrap()).collect();
     Ok(notes)
 }
 
 // update a note in sqlite DB
 #[tauri::command]
-fn db_update_note(id: usize, title: &str, content: &str) -> Result<()> {
+fn db_update_note(id: usize, title: &str, content: &str, app_handle: tauri::AppHandle) -> Result<()> {
     // create a connection to the sqlite database
-    let conn = Connection::open("notes.db").expect("failed to open database");
+    let respath = get_db_path(app_handle);
+    let conn = Connection::open(&respath).unwrap();
     // update a note in the database
     conn.execute(
         "UPDATE notes SET title = ?1, content = ?2 WHERE id = ?3",
@@ -190,9 +202,10 @@ fn db_update_note(id: usize, title: &str, content: &str) -> Result<()> {
 
 // delete a note from sqlite DB
 #[tauri::command]
-fn db_delete_note(id: usize) -> Result<()> {
+fn db_delete_note(id: usize, app_handle: tauri::AppHandle) -> Result<()> {
     // create a connection to the sqlite database
-    let conn = Connection::open("notes.db").expect("failed to open database");
+    let respath = get_db_path(app_handle);
+    let conn = Connection::open(&respath).unwrap();
     // delete a note from the database
     conn.execute(
         "DELETE FROM notes WHERE id = ?1",
@@ -202,9 +215,10 @@ fn db_delete_note(id: usize) -> Result<()> {
 }
 
 #[tauri::command]
-fn export_notes_to_pdf() -> Result<()> {
+fn export_notes_to_pdf(app_handle: tauri::AppHandle) -> Result<()> {
     // create a connection to the sqlite database
-    let conn = Connection::open("notes.db").expect("failed to open database");
+    let respath = get_db_path(app_handle);
+    let conn = Connection::open(&respath).unwrap();
     // query all notes from the database
     let mut stmt = conn.prepare("SELECT id, title, content FROM notes").expect("failed to prepare query");
     let note_iter = stmt.query_map([], |row| {
@@ -226,14 +240,36 @@ fn export_notes_to_pdf() -> Result<()> {
     Ok(())
 }
 
+fn get_db_path(app: tauri::AppHandle) -> String {
+    return app.path_resolver()
+        .app_data_dir()
+        .unwrap()
+        .into_os_string()
+        .into_string()
+        .unwrap() + "/notes.db";
+}
+
+fn get_json_path(app: tauri::AppHandle) -> String {
+    return app.path_resolver()
+        .app_data_dir()
+        .unwrap()
+        .into_os_string()
+        .into_string()
+        .unwrap() + "/notes.json";
+}
+
 fn main() {
     // fix the path environment
     let _ = fix_path_env::fix();
-    // initialize the database
-    init_db().expect("failed to initialize database");
-
     // run the tauri application
     tauri::Builder::default()
+        .setup(|app| {
+            fs::create_dir_all(app.path_resolver().app_data_dir().unwrap());
+            let respath = get_db_path(app.handle());
+            // initialize the database
+            init_db(respath);
+            Ok(())
+        })
         // Add the commands to the tauri application
         .invoke_handler(tauri::generate_handler![
             save_note,

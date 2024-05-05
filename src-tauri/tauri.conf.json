@@ -41,7 +41,7 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "resources": [],
+      "resources": ["notes.db", "notes.json"],
       "macOS": {
         "minimumSystemVersion": "11.0"
       }
