@@ -26,13 +26,21 @@ use directories::UserDirs;
 
 
 #[derive(Serialize, Deserialize)]
+
+/// A struct to represent a note
 struct Note {
+    /// The id of the note
     id: u32,
+    /// The title of the note
     title: String,
+    // The content of the note
     content: String,
 }
 
+
+/// Implement the Note struct
 impl Note {
+    /// Create a new note
     fn new(id: u32, title: String, content: String) -> Self {
         Note { id, title, content }
     }
@@ -40,6 +48,13 @@ impl Note {
 
 
 // Save a note to a file
+
+/// This function saves a note to a file
+/// # Arguments
+/// * `id` - The id of the note
+/// * `title` - The title of the note
+/// * `content` - The content of the note
+/// * `app_handle` - The handle to the tauri application
 #[tauri::command]
 fn save_note(id: usize, title: &str, content: &str, app_handle: tauri::AppHandle) -> Result<()> {
     // Read file content and deserialize it
@@ -65,6 +80,12 @@ fn save_note(id: usize, title: &str, content: &str, app_handle: tauri::AppHandle
 
 
 // Load notes from a file
+
+/// This function loads notes from a file
+/// # Arguments
+/// * `app_handle` - The handle to the tauri application
+/// # Returns
+/// * A Result containing the notes
 #[tauri::command]
 fn load_notes(app_handle: tauri::AppHandle) -> Result<Vec<Note>> {
     // Open the file
@@ -90,6 +111,13 @@ fn load_notes(app_handle: tauri::AppHandle) -> Result<Vec<Note>> {
 }
 
 // Update a note in the file
+
+/// This function updates a note in the file
+/// # Arguments
+/// * `id` - The id of the note
+/// * `title` - The title of the note
+/// * `content` - The content of the note
+/// * `app_handle` - The handle to the tauri application
 #[tauri::command]
 fn update_note(id: usize, title: &str, content: &str, app_handle: tauri::AppHandle) -> Result<()> {
     // open and read the file and deserialize data to Vec<Note>
@@ -114,6 +142,11 @@ fn update_note(id: usize, title: &str, content: &str, app_handle: tauri::AppHand
 }
 
 // Delete a note from the file
+
+/// This function deletes a note from the file
+/// # Arguments
+/// * `id` - The id of the note
+/// * `app_handle` - The handle to the tauri application
 #[tauri::command]
 fn delete_note(id: usize, app_handle: tauri::AppHandle) -> Result<()> {
     // open and read the file and deserialize data to Vec<Note>
@@ -141,6 +174,10 @@ fn delete_note(id: usize, app_handle: tauri::AppHandle) -> Result<()> {
 
 
 // create sqlite connection
+
+/// This function initializes the sqlite database
+/// # Arguments
+/// * `path` - The path to the sqlite database
 fn init_db(path: String) -> RusResult<()> {
     // create a connection to the sqlite database
     let conn = Connection::open(&path).expect("DB Connection Err");
@@ -156,6 +193,12 @@ fn init_db(path: String) -> RusResult<()> {
 }
 
 // create a note and save into sqlite DB
+
+/// This function creates a note and saves it into the sqlite database
+/// # Arguments
+/// * `title` - The title of the note
+/// * `content` - The content of the note
+/// * `app_handle` - The handle to the tauri application
 #[tauri::command]
 fn db_save_note(title: &str, content: &str, app_handle: tauri::AppHandle) -> Result<()> {
     // create a connection to the sqlite database
@@ -173,6 +216,12 @@ fn db_save_note(title: &str, content: &str, app_handle: tauri::AppHandle) -> Res
 }
 
 // load notes from sqlite DB
+
+/// This function loads notes from the sqlite database
+/// # Arguments
+/// * `app_handle` - The handle to the tauri application
+/// # Returns
+/// * A Result containing the notes
 #[tauri::command]
 fn db_load_notes(app_handle: tauri::AppHandle) -> Result<Vec<Note>> {
     // create a connection to the sqlite database
@@ -192,6 +241,13 @@ fn db_load_notes(app_handle: tauri::AppHandle) -> Result<Vec<Note>> {
 }
 
 // update a note in sqlite DB
+
+/// This function updates a note in the sqlite database
+/// # Arguments
+/// * `id` - The id of the note
+/// * `title` - The title of the note
+/// * `content` - The content of the note
+/// * `app_handle` - The handle to the tauri application
 #[tauri::command]
 fn db_update_note(id: usize, title: &str, content: &str, app_handle: tauri::AppHandle) -> Result<()> {
     // create a connection to the sqlite database
@@ -206,6 +262,11 @@ fn db_update_note(id: usize, title: &str, content: &str, app_handle: tauri::AppH
 }
 
 // delete a note from sqlite DB
+
+/// This function deletes a note from the sqlite database
+/// # Arguments
+/// * `id` - The id of the note
+/// * `app_handle` - The handle to the tauri application
 #[tauri::command]
 fn db_delete_note(id: usize, app_handle: tauri::AppHandle) -> Result<()> {
     // create a connection to the sqlite database
@@ -220,6 +281,9 @@ fn db_delete_note(id: usize, app_handle: tauri::AppHandle) -> Result<()> {
 }
 
 #[tauri::command]
+/// This function exports notes to a pdf file
+/// # Arguments
+/// * `app_handle` - The handle to the tauri application
 fn export_notes_to_pdf(app_handle: tauri::AppHandle) -> Result<()> {
     // create a connection to the sqlite database
     let respath = get_db_path(app_handle);
@@ -250,6 +314,8 @@ fn export_notes_to_pdf(app_handle: tauri::AppHandle) -> Result<()> {
     Ok(())
 }
 
+/// This function returns the path to the sqlite database
+/// This allow us to use the same database path in all the functions
 fn get_db_path(app: tauri::AppHandle) -> String {
     return app.path_resolver()
         .app_data_dir()
@@ -259,6 +325,8 @@ fn get_db_path(app: tauri::AppHandle) -> String {
         .unwrap() + "/notes.db";
 }
 
+/// This function returns the path to the json file
+/// This allow us to use the same json file path in all the functions
 fn get_json_path(app: tauri::AppHandle) -> String {
     return app.path_resolver()
         .app_data_dir()
@@ -268,6 +336,11 @@ fn get_json_path(app: tauri::AppHandle) -> String {
         .unwrap() + "/notes.json";
 }
 
+
+/// The main function
+/// This function initializes the database and runs the tauri application
+/// It also sets up the path environment
+/// It also adds the commands to the tauri application and runs it
 fn main() {
     // fix the path environment
     let _ = fix_path_env::fix();
