@@ -59,6 +59,7 @@ impl Note {
 /// * `app_handle` - The handle to the tauri application
 #[tauri::command]
 fn save_note(id: usize, title: &str, content: &str, app_handle: tauri::AppHandle) -> Result<()> {
+
     // Read file content and deserialize it
     let respath = get_json_path(app_handle);
     let data = fs::read_to_string(&respath).expect("Unable to read file");
@@ -90,6 +91,7 @@ fn save_note(id: usize, title: &str, content: &str, app_handle: tauri::AppHandle
 /// * A Result containing the notes
 #[tauri::command]
 fn load_notes(query_search: &str, app_handle: tauri::AppHandle) -> Result<Vec<Note>> {
+
     // Open the file
     let respath = get_json_path(app_handle);
     let mut file = std::fs::OpenOptions::new()
@@ -123,6 +125,7 @@ fn load_notes(query_search: &str, app_handle: tauri::AppHandle) -> Result<Vec<No
 /// * `app_handle` - The handle to the tauri application
 #[tauri::command]
 fn update_note(id: usize, title: &str, content: &str, app_handle: tauri::AppHandle) -> Result<()> {
+
     // open and read the file and deserialize data to Vec<Note>
     let respath = get_json_path(app_handle);
     let data = fs::read_to_string(&respath).expect("Unable to read file");
@@ -152,6 +155,7 @@ fn update_note(id: usize, title: &str, content: &str, app_handle: tauri::AppHand
 /// * `app_handle` - The handle to the tauri application
 #[tauri::command]
 fn delete_note(id: usize, app_handle: tauri::AppHandle) -> Result<()> {
+
     // open and read the file and deserialize data to Vec<Note>
     let respath = get_json_path(app_handle);
     let data = fs::read_to_string(&respath).expect("Unable to read file");
@@ -172,6 +176,7 @@ fn delete_note(id: usize, app_handle: tauri::AppHandle) -> Result<()> {
 
 #[tauri::command]
 fn export_notes_to_json(app_handle: tauri::AppHandle) -> Result<()> {
+
     // open and read the file and deserialize data to Vec<Note>
     let respath = get_json_path(app_handle);
     let data = fs::read_to_string(&respath).expect("Unable to read file");
@@ -181,16 +186,21 @@ fn export_notes_to_json(app_handle: tauri::AppHandle) -> Result<()> {
     let downloads_dir: String = user_dirs.download_dir().unwrap().to_str().unwrap().to_string();
     println!("Downloads Dir: {}", downloads_dir);
     let mut json_path = PathBuf::new();
+
     // create timestamp 
     let date: DateTime<Local> = Local::now();
     let timestamp = date.timestamp().to_string();
+
+    // create the path to the json file
     json_path.push(&downloads_dir);
     json_path.push(timestamp.to_string() + "_notes.json");
 
+    // write the notes to the json file
     let mut file = std::fs::OpenOptions::new().write(true).create(true).open(&json_path)?;
     let notes_json = serde_json::to_string(&notes).expect("Unable to serialize");
     file.write_all(notes_json.as_bytes())?;
 
+    // open the file in the file explorer
     let _ = std::process::Command::new("open")
         .arg("-R") // Opens the Finder at the location of the file
         .arg(&json_path)
@@ -216,8 +226,10 @@ fn export_notes_to_json(app_handle: tauri::AppHandle) -> Result<()> {
 /// # Arguments
 /// * `path` - The path to the sqlite database
 fn init_db(path: String) -> RusResult<()> {
+
     // create a connection to the sqlite database
     let conn = Connection::open(&path).expect("DB Connection Err");
+
     // create a table in the database
     conn.execute(
         "CREATE TABLE IF NOT EXISTS notes (
@@ -238,6 +250,7 @@ fn init_db(path: String) -> RusResult<()> {
 /// * `app_handle` - The handle to the tauri application
 #[tauri::command]
 fn db_save_note(title: &str, content: &str, app_handle: tauri::AppHandle) -> Result<()> {
+
     // create a connection to the sqlite database
     let respath = get_db_path(app_handle);
     let conn = Connection::open(&respath).unwrap();
@@ -261,9 +274,11 @@ fn db_save_note(title: &str, content: &str, app_handle: tauri::AppHandle) -> Res
 /// * A Result containing the notes
 #[tauri::command]
 fn db_load_notes(query_search: &str, app_handle: tauri::AppHandle) -> Result<Vec<Note>> {
+
     // create a connection to the sqlite database
     let respath = get_db_path(app_handle);
     let conn = Connection::open(&respath).unwrap();
+
     // query all notes from the database
     let mut stmt = conn.prepare("SELECT id, title, content FROM notes WHERE content LIKE '%' || ? || '%' OR title LIKE '%' || ? || '%'").unwrap_or_else(|_| panic!("failed to prepare query"));
     let note_iter = stmt.query_map(params![query_search, query_search], |row| {
@@ -287,9 +302,11 @@ fn db_load_notes(query_search: &str, app_handle: tauri::AppHandle) -> Result<Vec
 /// * `app_handle` - The handle to the tauri application
 #[tauri::command]
 fn db_update_note(id: usize, title: &str, content: &str, app_handle: tauri::AppHandle) -> Result<()> {
+
     // create a connection to the sqlite database
     let respath = get_db_path(app_handle);
     let conn = Connection::open(&respath).unwrap();
+
     // update a note in the database
     conn.execute(
         "UPDATE notes SET title = ?1, content = ?2 WHERE id = ?3",
@@ -306,9 +323,11 @@ fn db_update_note(id: usize, title: &str, content: &str, app_handle: tauri::AppH
 /// * `app_handle` - The handle to the tauri application
 #[tauri::command]
 fn db_delete_note(id: usize, app_handle: tauri::AppHandle) -> Result<()> {
+
     // create a connection to the sqlite database
     let respath = get_db_path(app_handle);
     let conn = Connection::open(&respath).unwrap();
+
     // delete a note from the database
     conn.execute(
         "DELETE FROM notes WHERE id = ?1",
@@ -322,9 +341,11 @@ fn db_delete_note(id: usize, app_handle: tauri::AppHandle) -> Result<()> {
 /// # Arguments
 /// * `app_handle` - The handle to the tauri application
 fn db_export_notes_to_json(app_handle: tauri::AppHandle) -> Result<()> {
+
     // create a connection to the sqlite database
     let respath = get_db_path(app_handle);
     let conn = Connection::open(&respath).unwrap();
+
     // query all notes from the database
     let mut stmt = conn.prepare("SELECT id, title, content FROM notes").expect("failed to prepare query");
     let note_iter = stmt.query_map([], |row| {
@@ -339,16 +360,21 @@ fn db_export_notes_to_json(app_handle: tauri::AppHandle) -> Result<()> {
     let downloads_dir: String = user_dirs.download_dir().unwrap().to_str().unwrap().to_string();
     println!("Downloads Dir: {}", downloads_dir);
     let mut json_path = PathBuf::new();
+
     // create timestamp 
     let date: DateTime<Local> = Local::now();
     let timestamp = date.timestamp().to_string();
     json_path.push(&downloads_dir);
+
+    // create the path to the json file
     json_path.push(timestamp.to_string() + "_notes.json");
 
+    // write the notes to the json file
     let mut file = std::fs::OpenOptions::new().write(true).create(true).open(&json_path)?;
     let notes_json = serde_json::to_string(&notes).expect("Unable to serialize");
     file.write_all(notes_json.as_bytes())?;
 
+    // open the file in the file explorer
     let _ = std::process::Command::new("open")
         .arg("-R") // Opens the Finder at the location of the file
         .arg(&json_path)
@@ -364,6 +390,8 @@ fn db_export_notes_to_json(app_handle: tauri::AppHandle) -> Result<()> {
 
 /// This function returns the path to the sqlite database
 /// This allow us to use the same database path in all the functions
+/// # Arguments
+/// * `app` - The handle to the tauri application
 fn get_db_path(app: tauri::AppHandle) -> String {
     return app.path_resolver()
         .app_data_dir()
@@ -375,6 +403,8 @@ fn get_db_path(app: tauri::AppHandle) -> String {
 
 /// This function returns the path to the json file
 /// This allow us to use the same json file path in all the functions
+/// # Arguments
+/// * `app` - The handle to the tauri application
 fn get_json_path(app: tauri::AppHandle) -> String {
     return app.path_resolver()
         .app_data_dir()

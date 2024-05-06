@@ -1,6 +1,6 @@
 const { invoke } = window.__TAURI__.tauri;
 
-// Display the notes when Dom is loaded
+// ----------------- LOAD NOTES ON PAGE LOAD -----------------
 window.addEventListener("DOMContentLoaded", async () => {
   changeTypeOfSaving(typeOfSaving); // Set the type of saving
   const loadNotes = new LoadNotes();
@@ -11,6 +11,7 @@ let createdNoteId = null; // Variable to track the note id for delete operation 
 let typeOfSaving = "json"; // Variable to track the type of saving
 let queryText = ""; // Variable to track the search query
 
+// ----------------- CHANGE TYPE OF SAVING -----------------
 function changeTypeOfSaving(type) {
   const jsonSaving = document.getElementById("json");
   const databaseSaving = document.getElementById("database");
@@ -25,7 +26,7 @@ function changeTypeOfSaving(type) {
   }
 }
 
-// When the user clicks anywhere outside of the modal, close it
+// ----------------- CLOSE MODAL WHEN CLICKED OUTSIDE -----------------
 window.onclick = function (event) {
   const modal = new Modal();
   if (event.target === document.getElementById("add-note-modal")) {
@@ -33,7 +34,7 @@ window.onclick = function (event) {
   }
 };
 
-// class to handle notes
+// ----------------- NOTES CLASS -----------------
 class Notes {
   constructor(id, title, content) {
     this.id = id;
@@ -41,6 +42,7 @@ class Notes {
     this.content = content;
   }
 
+  // ----------------- SAVE NOTE -----------------
   async saveNote() {
     try {
       if (typeOfSaving === "json") {
@@ -62,6 +64,7 @@ class Notes {
     }
   }
 
+  // ----------------- UPDATE NOTE -----------------
   async updateNote() {
     try {
       if (typeOfSaving === "json") {
@@ -83,6 +86,7 @@ class Notes {
     }
   }
 
+  // ----------------- DELETE NOTE -----------------
   async deleteNote() {
     try {
       if (typeOfSaving === "json") {
@@ -98,6 +102,7 @@ class Notes {
     }
   }
 
+  // ----------------- SAVE OR UPDATE NOTE -----------------
   async saveOrUpdateNote() {
     const quill = new Quill("#editor");
     const content = quill.root.innerHTML;
@@ -131,12 +136,13 @@ class Notes {
   }
 }
 
-// Class to load notes
+// ----------------- LOAD NOTES CLASS -----------------
 class LoadNotes {
   constructor() {
     this.notes = [];
   }
 
+  // ----------------- LOAD NOTES -----------------
   async loadNotes() {
     try {
       if (typeOfSaving === "json") {
@@ -152,12 +158,13 @@ class LoadNotes {
   }
 }
 
-// Class to display notes
+// ----------------- DISPLAY NOTES CLASS -----------------
 class DisplayNotes {
   constructor(notes) {
     this.notes = notes;
   }
 
+  // ----------------- DISPLAY NOTES IN THE DOM -----------------
   displayNotes() {
     const noteContainer = document.getElementById("notes");
     noteContainer.innerHTML = ""; // Clear previous notes
@@ -238,12 +245,13 @@ class DisplayNotes {
   }
 }
 
-// Class to preview note
+// ----------------- PREVIEW NOTE CLASS -----------------
 class PreviewNote {
   constructor() {
     this.noteContent = document.getElementById("note-preview");
   }
 
+  // ----------------- CREATE PREVIEW NOTE -----------------
   createPreview(note) {
     this.noteContent.innerHTML = ""; // Clear previous note
     const noteTitle = document.createElement("h2");
@@ -254,6 +262,7 @@ class PreviewNote {
     this.noteContent.appendChild(noteText);
   }
 
+  // ----------------- CREATE NO CONTENT PREVIEW -----------------
   createNoContentPreview() {
     this.noteContent.innerHTML = "";
     const noContentTitle = document.createElement("h2");
@@ -262,7 +271,7 @@ class PreviewNote {
   }
 }
 
-// class to handle Modal
+// ----------------- MODAL CLASS -----------------
 class Modal {
   constructor() {
     this.titleInput = document.getElementById("note-title");
@@ -271,6 +280,7 @@ class Modal {
     this.quill = null;
   }
 
+  // ----------------- OPEN MODAL -----------------
   openModal(title = "", text = "") {
     this.titleInput.value = title;
     this.submitBtn.textContent = isUpdate ? "Update Note" : "Save Note";
@@ -287,13 +297,15 @@ class Modal {
     this.quill.root.innerHTML = text;
   }
 
+  // ----------------- CLOSE MODAL -----------------
   closeModal() {
     document.getElementById("add-note-modal").style.display = "none";
+    isUpdate = false;
     document.querySelector(".ql-toolbar.ql-snow").remove();
   }
 }
 
-// Event listeners
+// ----------------- EVENT LISTENERS -----------------
 
 // Event listener to open modal
 document.getElementById("add-note").addEventListener("click", () => {
@@ -334,6 +346,7 @@ document.getElementById("json").addEventListener("click", async () => {
   await loadNotes.loadNotes();
 });
 
+// Event listener to change type of saving
 document.getElementById("database").addEventListener("click", async () => {
   changeTypeOfSaving("database");
   const loadNotes = new LoadNotes();

@@ -52,3 +52,16 @@ cargo tauri dev
 ```shell
 cargo tauri build
 ```
+
+## Documentation
+
+you can access the full documentation of the project by doing these following steps
+
+1. Open shell in the project directory tauri_notes_app and run the following command
+
+```shell
+cd src-tauri
+cargo doc --open
+```
+
+This will open a page in the browser with all the documentation about rust functions and struct
