@@ -53,6 +53,8 @@ cargo tauri dev
 cargo tauri build
 ```
 
+find the dmg file in src-tauri > target > release > dmg and open it, it will install tauri_notes_app on your computer
+
 ## Documentation
 
 you can access the full documentation of the project by doing these following steps
