@@ -10,6 +10,7 @@
 
 
 use serde::{Serialize, Deserialize};
+use serde_json::to_string;
 use tauri::{ Result};
 use std::fs;
 use std::io::Write;
@@ -17,6 +18,7 @@ use rusqlite::{Connection, params, Result as RusResult};
 use fix_path_env;
 use std::path::PathBuf;
 use directories::UserDirs;
+use chrono::{Local, DateTime};
 
 
 
@@ -167,6 +169,40 @@ fn delete_note(id: usize, app_handle: tauri::AppHandle) -> Result<()> {
     Ok(())
 }
 
+#[tauri::command]
+fn export_notes_to_json(app_handle: tauri::AppHandle) -> Result<()> {
+    // open and read the file and deserialize data to Vec<Note>
+    let respath = get_json_path(app_handle);
+    let data = fs::read_to_string(&respath).expect("Unable to read file");
+    let notes: Vec<Note> = serde_json::from_str(&data).expect("Unable to deserialize");
+
+    let user_dirs: UserDirs = UserDirs::new().unwrap();
+    let downloads_dir: String = user_dirs.download_dir().unwrap().to_str().unwrap().to_string();
+    println!("Downloads Dir: {}", downloads_dir);
+    let mut json_path = PathBuf::new();
+    // create timestamp 
+    let date: DateTime<Local> = Local::now();
+    let timestamp = date.timestamp().to_string();
+    json_path.push(&downloads_dir);
+    json_path.push(timestamp.to_string() + "_notes.json");
+
+    let mut file = std::fs::OpenOptions::new().write(true).create(true).open(&json_path)?;
+    let notes_json = serde_json::to_string(&notes).expect("Unable to serialize");
+    file.write_all(notes_json.as_bytes())?;
+
+    let _ = std::process::Command::new("open")
+        .arg("-R") // Opens the Finder at the location of the file
+        .arg(&json_path)
+        .output();
+    
+    #[cfg(not(target_os = "macos"))]
+    let _ = std::process::Command::new("explorer")
+        .arg(&json_path)
+        .output();
+
+    Ok(())
+}
+
 
 
 // --------------------------------- SQLite Database ---------------------------------
@@ -284,7 +320,7 @@ fn db_delete_note(id: usize, app_handle: tauri::AppHandle) -> Result<()> {
 /// This function exports notes to a pdf file
 /// # Arguments
 /// * `app_handle` - The handle to the tauri application
-fn export_notes_to_pdf(app_handle: tauri::AppHandle) -> Result<()> {
+fn db_export_notes_to_json(app_handle: tauri::AppHandle) -> Result<()> {
     // create a connection to the sqlite database
     let respath = get_db_path(app_handle);
     let conn = Connection::open(&respath).unwrap();
@@ -300,16 +336,27 @@ fn export_notes_to_pdf(app_handle: tauri::AppHandle) -> Result<()> {
     let notes: Vec<Note> = note_iter.map(|note| note.unwrap()).collect();
     let user_dirs: UserDirs = UserDirs::new().unwrap();
     let downloads_dir: String = user_dirs.download_dir().unwrap().to_str().unwrap().to_string();
-    let mut pdf_path = PathBuf::new();
-    pdf_path.push(&downloads_dir);
-    pdf_path.push("notes.pdf");
+    println!("Downloads Dir: {}", downloads_dir);
+    let mut json_path = PathBuf::new();
+    // create timestamp 
+    let date: DateTime<Local> = Local::now();
+    let timestamp = date.timestamp().to_string();
+    json_path.push(&downloads_dir);
+    json_path.push(timestamp.to_string() + "_notes.json");
 
-    // create a pdf file
-    let mut file = std::fs::OpenOptions::new().write(true).create(true).open(pdf_path)?;
-    writeln!(file, "Notes\n\n")?;
-    for note in notes {
-        writeln!(file, "Title: {}\nContent: {}\n\n", note.title, note.content)?;
-    }
+    let mut file = std::fs::OpenOptions::new().write(true).create(true).open(&json_path)?;
+    let notes_json = serde_json::to_string(&notes).expect("Unable to serialize");
+    file.write_all(notes_json.as_bytes())?;
+
+    let _ = std::process::Command::new("open")
+        .arg("-R") // Opens the Finder at the location of the file
+        .arg(&json_path)
+        .output();
+    
+    #[cfg(not(target_os = "macos"))]
+    let _ = std::process::Command::new("explorer")
+        .arg(&json_path)
+        .output();
 
     Ok(())
 }
@@ -363,7 +410,8 @@ fn main() {
             db_load_notes,
             db_update_note,
             db_delete_note,
-            export_notes_to_pdf
+            db_export_notes_to_json,
+            export_notes_to_json
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

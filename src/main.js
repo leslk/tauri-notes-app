@@ -317,7 +317,11 @@ document.getElementById("note-submit").addEventListener("click", async (e) => {
 // Event listener to export notes
 document.getElementById("export-button").addEventListener("click", async () => {
   try {
-    await invoke("export_notes_to_pdf");
+    if (typeOfSaving === "json") {
+      await invoke("export_notes_to_json");
+    } else {
+      await invoke("db_export_notes_to_json");
+    }
   } catch (error) {
     console.error("Failed to export notes:", error);
   }
