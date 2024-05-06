@@ -89,7 +89,7 @@ fn save_note(id: usize, title: &str, content: &str, app_handle: tauri::AppHandle
 /// # Returns
 /// * A Result containing the notes
 #[tauri::command]
-fn load_notes(app_handle: tauri::AppHandle) -> Result<Vec<Note>> {
+fn load_notes(query_search: &str, app_handle: tauri::AppHandle) -> Result<Vec<Note>> {
     // Open the file
     let respath = get_json_path(app_handle);
     let mut file = std::fs::OpenOptions::new()
@@ -108,7 +108,8 @@ fn load_notes(app_handle: tauri::AppHandle) -> Result<Vec<Note>> {
 
     // Deserialize the Json data to Vec<Note>
     let notes: Vec<Note> = serde_json::from_str(&data).expect("Unable to deserialize");
-
+    // Filter notes based on the query search to lower case
+    let notes: Vec<Note> = notes.into_iter().filter(|note| note.title.to_lowercase().contains(&query_search.to_lowercase()) || note.content.to_lowercase().contains(&query_search.to_lowercase())).collect();
     Ok(notes)
 }
 
@@ -259,13 +260,13 @@ fn db_save_note(title: &str, content: &str, app_handle: tauri::AppHandle) -> Res
 /// # Returns
 /// * A Result containing the notes
 #[tauri::command]
-fn db_load_notes(app_handle: tauri::AppHandle) -> Result<Vec<Note>> {
+fn db_load_notes(query_search: &str, app_handle: tauri::AppHandle) -> Result<Vec<Note>> {
     // create a connection to the sqlite database
     let respath = get_db_path(app_handle);
     let conn = Connection::open(&respath).unwrap();
     // query all notes from the database
-    let mut stmt = conn.prepare("SELECT id, title, content FROM notes").unwrap_or_else(|_| panic!("failed to prepare query"));
-    let note_iter = stmt.query_map([], |row| {
+    let mut stmt = conn.prepare("SELECT id, title, content FROM notes WHERE content LIKE '%' || ? || '%' OR title LIKE '%' || ? || '%'").unwrap_or_else(|_| panic!("failed to prepare query"));
+    let note_iter = stmt.query_map(params![query_search, query_search], |row| {
         Ok(Note {
             id: row.get(0).expect("failed to get id"),
             title: row.get(1).expect("failed to get title"),

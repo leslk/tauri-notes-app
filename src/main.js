@@ -140,7 +140,7 @@ class LoadNotes {
   async loadNotes() {
     try {
       if (typeOfSaving === "json") {
-        this.notes = await invoke("load_notes");
+        this.notes = await invoke("load_notes", { querySearch: queryText });
       } else {
         this.notes = await invoke("db_load_notes", { querySearch: queryText });
       }
@@ -343,7 +343,6 @@ document.getElementById("database").addEventListener("click", async () => {
 // Event listener to search notes
 document.getElementById("search-notes").addEventListener("input", async (e) => {
   queryText = e.target.value;
-  console.log(queryText);
   const loadNotes = new LoadNotes();
   await loadNotes.loadNotes();
 });
